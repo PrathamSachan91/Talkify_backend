@@ -3,9 +3,10 @@ import { Signin, Login,getUser,Logout,googleLogin } from "../Controller/Authenti
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { getAllUsers } from "../Controller/Chatlist.js";
 import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById } from "../Controller/ChatControl.js";
-import { upload } from "../utils/upload.js";
+import { upload } from "../middleware/upload.js";
 import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
+import { EditProfile } from "../Controller/editProfile.js";
 
 const router = express.Router();
 
@@ -23,5 +24,6 @@ router.get("/chat/getmeta/:conversationId", requireAuth,getConversationMeta);
 router.post("/conversations/creategroup",requireAuth,createGroup);
 router.get("/groupList", requireAuth, getMyGroups);
 router.get("/boardcastList",requireAuth,getBroadcast)
+router.post("/editProfile",requireAuth,upload.single("profile_image"),EditProfile);
 
 export default router;

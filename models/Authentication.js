@@ -34,6 +34,10 @@ const Authentication = sequelize.define(
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+    },
+    profile_image:{
+      type:DataTypes.STRING,
+      allowNull:true,
     }
   },
   {

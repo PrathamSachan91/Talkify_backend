@@ -65,6 +65,7 @@ export const Signin = async (req, res) => {
         auth_id: user.auth_id,
         user_name: user.user_name,
         email: user.email,
+        profile_image: user.profile_image,
       },
     });
   } catch (error) {
@@ -122,6 +123,7 @@ export const Login = async (req, res) => {
         auth_id: user.auth_id,
         user_name: user.user_name,
         email: user.email,
+        profile_image: user.profile_image,
       },
     });
   } catch (err) {

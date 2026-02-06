@@ -6,6 +6,7 @@ import {
   ConversationMember,
 } from "../models/index.js";
 import { getIO } from "../socket.js";
+import cloudinary from "../lib/cloudinary.js";
 
 /* ---------------- GET OR CREATE CONVERSATION ---------------- */
 export const getOrCreateConversation = async (req, res) => {
@@ -78,7 +79,7 @@ export const getMessages = async (req, res) => {
       include: {
         model: Authentication,
         as: "sender",
-        attributes: ["auth_id", "user_name"],
+        attributes: ["auth_id", "user_name","profile_image"],
       },
     });
 
@@ -111,7 +112,7 @@ export const sendMessage = async (req, res) => {
       }
     }
 
-    if (conversation.type === "group" || conversation.type === "boardcast") {
+    if (conversation.type === "group" || conversation.type === "broadcast") {
       const isMember = await ConversationMember.findOne({
         where: {
           conversation_id: conversationId,
@@ -125,10 +126,16 @@ export const sendMessage = async (req, res) => {
     }
 
     const cleanText = text?.trim() || null;
-
-    const files = req.files || [];
-    const images = files.map((file) => `/uploads/chat/${file.filename}`);
-
+    const images=[];
+    for (const file of req.files || []) {
+      const result = await cloudinary.uploader.upload(
+        `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+        {
+          folder: "chat-images",
+        },
+      );
+      images.push(result.secure_url);
+    }
     if (!cleanText && images.length === 0) {
       return res.status(400).json({ message: "Empty message" });
     }
@@ -149,7 +156,7 @@ export const sendMessage = async (req, res) => {
       include: {
         model: Authentication,
         as: "sender",
-        attributes: ["auth_id", "user_name"],
+        attributes: ["auth_id", "user_name","profile_image"],
       },
     });
     const io = getIO();
@@ -215,7 +222,7 @@ export const getConversationMeta = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   const user = await Authentication.findByPk(req.params.userId, {
-    attributes: ["auth_id", "user_name"],
+    attributes: ["auth_id", "user_name","profile_image"],
   });
 
   if (!user) {
