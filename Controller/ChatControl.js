@@ -222,7 +222,7 @@ export const getConversationMeta = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   const user = await Authentication.findByPk(req.params.userId, {
-    attributes: ["auth_id", "user_name","profile_image"],
+    attributes: ["auth_id", "user_name","profile_image","last_active"],
   });
 
   if (!user) {
