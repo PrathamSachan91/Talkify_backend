@@ -7,6 +7,7 @@ import { upload } from "../middleware/upload.js";
 import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
 import { EditProfile } from "../Controller/editProfile.js";
+import { imageList } from "../Controller/Gallery.js";
 
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.post("/conversations/creategroup",requireAuth,createGroup);
 router.get("/groupList", requireAuth, getMyGroups);
 router.get("/boardcastList",requireAuth,getBroadcast)
 router.post("/editProfile",requireAuth,upload.single("profile_image"),EditProfile);
+router.get("/messages/images/:conversationId",requireAuth,imageList)
 
 export default router;
