@@ -11,7 +11,7 @@ export const getMyGroups = async (req, res) => {
       where: { user_id: me },
       attributes: [],
     },
-    attributes: ["conversation_id", "group_name"],
+    attributes: ["conversation_id", "group_name","group_image"],
   });
 
   res.json(groups);

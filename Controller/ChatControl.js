@@ -212,6 +212,8 @@ export const getConversationMeta = async (req, res) => {
       return res.json({
         type: conversation.type,
         group_name: conversation.group_name,
+        created_by: conversation.created_by,
+        group_image:conversation.group_image,
       });
     }
   } catch (err) {

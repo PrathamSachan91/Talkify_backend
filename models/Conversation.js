@@ -33,6 +33,10 @@ const Conversation = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    group_image:{
+      type:DataTypes.STRING,
+      allowNull:true,
+    }
   },
   {
     tableName: "conversations",
