@@ -16,7 +16,7 @@ app.set("trust proxy", 1);
 /* ✅ CORS (MUST be before routes) */
 app.use(
   cors({
-    origin: ["http://localhost:3000","https://talkify-frontend-qql7.onrender.com"],
+    origin: "https://talkify-frontend-qql7.onrender.com",
     credentials: true,
   })
 );
