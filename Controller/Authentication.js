@@ -53,12 +53,12 @@ export const Signin = async (req, res) => {
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
     res.cookie("access_token", token, {
-  httpOnly: true,
-  secure: true,          // 🔥 REQUIRED on Render
-  sameSite: "none",      // 🔥 REQUIRED for cross-site cookies
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-});
-
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED on Render
+      sameSite: "none", // 🔥 REQUIRED for cross-site cookies
+      domain: ".onrender.com",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     const io = getIO();
     io.emit("user_created", {
@@ -124,12 +124,12 @@ export const Login = async (req, res) => {
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
     res.cookie("access_token", token, {
-  httpOnly: true,
-  secure: true,          // 🔥 REQUIRED on Render
-  sameSite: "none",      // 🔥 REQUIRED for cross-site cookies
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-});
-
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED on Render
+      sameSite: "none", // 🔥 REQUIRED for cross-site cookies
+      domain: ".onrender.com",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     return res.json({
       message: "Login successful",
@@ -197,12 +197,12 @@ export const googleLogin = async (req, res) => {
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
     res.cookie("access_token", token, {
-  httpOnly: true,
-  secure: true,          // 🔥 REQUIRED on Render
-  sameSite: "none",      // 🔥 REQUIRED for cross-site cookies
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-});
-
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED on Render
+      sameSite: "none", // 🔥 REQUIRED for cross-site cookies
+      domain: ".onrender.com",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({ message: "Google login successful" });
   } catch (err) {
@@ -226,8 +226,9 @@ export const Logout = async (req, res) => {
 
   res.clearCookie("access_token", {
     httpOnly: true,
-    // sameSite: "lax",
+    secure: true,
     sameSite: "none",
+    domain: ".onrender.com",
   });
 
   res.json({ message: "Logged out successfully" });
