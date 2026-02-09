@@ -54,8 +54,9 @@ export const Signin = async (req, res) => {
     // });
     res.cookie("access_token", token, {
   httpOnly: true,
-  secure: true,
-  sameSite: "none",
+  secure: true,          // 🔥 REQUIRED on Render
+  sameSite: "none",      // 🔥 REQUIRED for cross-site cookies
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
 
@@ -124,8 +125,9 @@ export const Login = async (req, res) => {
     // });
     res.cookie("access_token", token, {
   httpOnly: true,
-  secure: true,
-  sameSite: "none",
+  secure: true,          // 🔥 REQUIRED on Render
+  sameSite: "none",      // 🔥 REQUIRED for cross-site cookies
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
 
@@ -196,8 +198,9 @@ export const googleLogin = async (req, res) => {
     // });
     res.cookie("access_token", token, {
   httpOnly: true,
-  secure: true,
-  sameSite: "none",
+  secure: true,          // 🔥 REQUIRED on Render
+  sameSite: "none",      // 🔥 REQUIRED for cross-site cookies
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
 
@@ -224,7 +227,7 @@ export const Logout = async (req, res) => {
   res.clearCookie("access_token", {
     httpOnly: true,
     // sameSite: "lax",
-    sameSite:"none",
+    sameSite: "none",
   });
 
   res.json({ message: "Logged out successfully" });
