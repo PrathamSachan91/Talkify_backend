@@ -56,7 +56,7 @@ export const Signin = async (req, res) => {
       httpOnly: true,
       secure: true, // 🔥 REQUIRED on Render
       sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-      domain: ".onrender.com",
+      path: "/", 
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -127,7 +127,7 @@ export const Login = async (req, res) => {
       httpOnly: true,
       secure: true, // 🔥 REQUIRED on Render
       sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-      domain: ".onrender.com",
+      path: "/", 
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -200,7 +200,7 @@ export const googleLogin = async (req, res) => {
       httpOnly: true,
       secure: true, // 🔥 REQUIRED on Render
       sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-      domain: ".onrender.com",
+      path: "/", 
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -228,7 +228,7 @@ export const Logout = async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: ".onrender.com",
+    path: "/", 
   });
 
   res.json({ message: "Logged out successfully" });
