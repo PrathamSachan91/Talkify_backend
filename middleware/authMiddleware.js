@@ -21,7 +21,7 @@ export const requireAuth = async (req, res, next) => {
       where: {
         auth_id: decoded.auth_id,
         token: hashToken(token),
-        is_revoked: false,
+        // is_revoked: false,
       },
     });
 
