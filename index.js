@@ -12,12 +12,17 @@ const app = express();
 const server = http.createServer(app);
 
 /* ✅ CORS (MUST be before routes) */
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: "http://localhost:3000",
+//     credentials: true,
+//   })
+// );
+app.use(cors({
+  origin: "https://your-frontend.vercel.app",
+  credentials: true,
+}));
+
 
 /* Middleware */
 app.use(express.json());

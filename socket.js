@@ -66,12 +66,19 @@ let io;
 const onlineUsers = new Map(); // userId -> socketId
 
 export const initSocket = (server) => {
+  // io = new Server(server, {
+  //   cors: {
+  //     origin: "http://localhost:3000",
+  //     credentials: true,
+  //   },
+  // });
   io = new Server(server, {
-    cors: {
-      origin: "http://localhost:3000",
-      credentials: true,
-    },
-  });
+  cors: {
+    origin: "https://your-frontend.vercel.app",
+    credentials: true,
+  },
+});
+
 
   io.use((socket, next) => {
     const cookies = cookie.parse(socket.handshake.headers.cookie || "");

@@ -46,12 +46,18 @@ export const Signin = async (req, res) => {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
+    // res.cookie("access_token", token, {
+    //   httpOnly: true,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
     res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
+
 
     const io = getIO();
     io.emit("user_created", {
@@ -110,12 +116,18 @@ export const Login = async (req, res) => {
 
     await user.update({ last_active: new Date() });
 
+    // res.cookie("access_token", token, {
+    //   httpOnly: true,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
     res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
+
 
     return res.json({
       message: "Login successful",
@@ -176,12 +188,18 @@ export const googleLogin = async (req, res) => {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
+    // res.cookie("access_token", token, {
+    //   httpOnly: true,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
     res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
+
 
     res.json({ message: "Google login successful" });
   } catch (err) {
@@ -205,7 +223,8 @@ export const Logout = async (req, res) => {
 
   res.clearCookie("access_token", {
     httpOnly: true,
-    sameSite: "lax",
+    // sameSite: "lax",
+    sameSite:"none",
   });
 
   res.json({ message: "Logged out successfully" });
