@@ -5,6 +5,7 @@ import routes from "./routes/route.js";
 import { initSocket } from "./socket.js";
 import dotenv from "dotenv";
 import cors from "cors";
+import sequelize from "./lib/db.js";
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ const server = http.createServer(app);
 /* ✅ CORS (MUST be before routes) */
 app.use(
   cors({
-    origin: ["http://localhost:3000","https://your-frontend.onrender.com"],
+    origin: ["http://localhost:3000","https://talkify-frontend-qql7.onrender.com"],
     credentials: true,
   })
 );
@@ -22,6 +23,14 @@ app.use(
 /* Middleware */
 app.use(express.json());
 app.use(cookieParser());
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("✅ Database connected successfully");
+  } catch (error) {
+    console.error("❌ Unable to connect to the database:", error);
+  }
+})();
 
 /* Routes */
 app.use("/api", routes);

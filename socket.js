@@ -68,7 +68,7 @@ const onlineUsers = new Map(); // userId -> socketId
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: ["http://localhost:3000","https://your-frontend.onrender.com"],
+      origin: ["http://localhost:3000","https://talkify-frontend-qql7.onrender.com"],
       credentials: true,
     },
   });
