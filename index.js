@@ -39,8 +39,10 @@ app.use("/uploads", express.static("uploads"));
 
 /* Init Socket */
 initSocket(server);
-
-server.listen(process.env.PORT, () => {
+app.get("/",(req,res) => {
+  return res.status(200).json({message:"Server is running"})
+})
+server.listen(process.env.DB_PORT, () => {
   console.log(`🚀 Server is running on port ${process.env.PORT}`);
 });
 
