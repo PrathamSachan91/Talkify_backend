@@ -7,7 +7,6 @@ import {
 } from "../models/index.js";
 import { getIO } from "../socket.js";
 import cloudinary from "../lib/cloudinary.js";
-// import {redis} from "../lib/redis.js";
 
 /* ---------------- GET OR CREATE CONVERSATION ---------------- */
 export const getOrCreateConversation = async (req, res) => {
@@ -49,8 +48,6 @@ export const getMessages = async (req, res) => {
     const { conversationId } = req.params;
     const me = req.user.auth_id;
 
-    // const cacheKey = `messages:${conversationId}`;
-
     const conversation = await Conversation.findByPk(conversationId);
 
     if (!conversation) {
@@ -76,12 +73,6 @@ export const getMessages = async (req, res) => {
       }
     }
 
-    // const cacheMessage=await redis.get(cacheKey);
-    // if(cacheMessage){
-    //   console.log("Message from Redis");
-    //   return res.json(JSON.parse(cacheMessage));
-    // }
-
     const messages = await Message.findAll({
       where: { conversation_id: conversationId },
       order: [["createdAt", "ASC"]],
@@ -91,10 +82,6 @@ export const getMessages = async (req, res) => {
         attributes: ["auth_id", "user_name","profile_image"],
       },
     });
-
-    // await redis.set(cacheKey,JSON.stringify(messages),{
-    //   EX:60,
-    // })
 
     res.json(messages);
   } catch (err) {
@@ -164,9 +151,6 @@ export const sendMessage = async (req, res) => {
       images,
       type,
     });
-
-    // const cacheKey=`messages:${conversationId}`;
-    // await redis.del(cacheKey);
 
     const fullMessage = await Message.findByPk(message.id, {
       include: {
