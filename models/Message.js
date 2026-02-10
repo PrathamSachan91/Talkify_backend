@@ -30,6 +30,14 @@ const Message = sequelize.define(
       type: DataTypes.JSON,
       allowNull: true,
     },
+    status_sender: {
+      type: DataTypes.INTEGER,
+      allowNull:true,
+    },
+    status_receiver:{
+      type:DataTypes.INTEGER,
+      allowNull:true,
+    },
   },
   {
     tableName: "messages",

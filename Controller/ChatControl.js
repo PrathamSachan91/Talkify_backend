@@ -72,16 +72,41 @@ export const getMessages = async (req, res) => {
         return res.status(403).json({ message: "Access denied" });
       }
     }
+    let messages;
 
-    const messages = await Message.findAll({
-      where: { conversation_id: conversationId },
-      order: [["createdAt", "ASC"]],
-      include: {
-        model: Authentication,
-        as: "sender",
-        attributes: ["auth_id", "user_name","profile_image"],
-      },
-    });
+    if (conversation.type === "group" || conversation.type === "broadcast") {
+      messages = await Message.findAll({
+        where: { conversation_id: conversationId },
+        order: [["createdAt", "ASC"]],
+        include: {
+          model: Authentication,
+          as: "sender",
+          attributes: ["auth_id", "user_name", "profile_image"],
+        },
+      });
+    } else {
+      messages = await Message.findAll({
+        where: {
+          conversation_id: conversationId,
+          [Op.or]: [
+            {
+              sender_id: me,
+              status_sender: 1,
+            },
+            {
+              sender_id: { [Op.ne]: me },
+              status_receiver: 1,
+            },
+          ],
+        },
+        order: [["createdAt", "ASC"]],
+        include: {
+          model: Authentication,
+          as: "sender",
+          attributes: ["auth_id", "user_name", "profile_image"],
+        },
+      });
+    }
 
     res.json(messages);
   } catch (err) {
@@ -126,7 +151,7 @@ export const sendMessage = async (req, res) => {
     }
 
     const cleanText = text?.trim() || null;
-    const images=[];
+    const images = [];
     for (const file of req.files || []) {
       const result = await cloudinary.uploader.upload(
         `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
@@ -156,7 +181,7 @@ export const sendMessage = async (req, res) => {
       include: {
         model: Authentication,
         as: "sender",
-        attributes: ["auth_id", "user_name","profile_image"],
+        attributes: ["auth_id", "user_name", "profile_image"],
       },
     });
     const io = getIO();
@@ -213,7 +238,7 @@ export const getConversationMeta = async (req, res) => {
         type: conversation.type,
         group_name: conversation.group_name,
         created_by: conversation.created_by,
-        group_image:conversation.group_image,
+        group_image: conversation.group_image,
       });
     }
   } catch (err) {
@@ -224,7 +249,7 @@ export const getConversationMeta = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   const user = await Authentication.findByPk(req.params.userId, {
-    attributes: ["auth_id", "user_name","profile_image","last_active"],
+    attributes: ["auth_id", "user_name", "profile_image", "last_active"],
   });
 
   if (!user) {
@@ -232,4 +257,38 @@ export const getUserById = async (req, res) => {
   }
 
   res.json(user);
+};
+
+export const deleteConversation = async (req, res) => {
+  try {
+    const me = req.user.auth_id;
+    const { conversationId } = req.body;
+
+    await Message.update(
+      { status_sender: 0 },
+      {
+        where: {
+          conversation_id: conversationId,
+          sender_id: me,
+        },
+      }
+    );
+
+    await Message.update(
+      { status_receiver: 0 },
+      {
+        where: {
+          conversation_id: conversationId,
+          sender_id: { [Op.ne]: me },
+        },
+      }
+    );
+    const io = getIO();
+    io.emit("delete_message");
+
+    res.json({ message: "Chat deleted for current user" });
+  } catch (err) {
+    console.error("Delete conversation error:", err);
+    res.status(500).json({ message: "Failed to delete chat" });
+  }
 };
