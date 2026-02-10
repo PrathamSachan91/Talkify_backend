@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import AuthToken from "../models/token.js";
 import Authentication from "../models/Authentication.js";
 import crypto from "crypto";
-import { where } from "sequelize";
 
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
