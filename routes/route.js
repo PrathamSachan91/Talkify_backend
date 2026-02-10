@@ -2,7 +2,7 @@ import express from "express";
 import { Signin, Login,getUser,Logout,googleLogin } from "../Controller/Authentication.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { getAllUsers } from "../Controller/Chatlist.js";
-import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation } from "../Controller/ChatControl.js";
+import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe } from "../Controller/ChatControl.js";
 import { upload } from "../middleware/upload.js";
 import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
@@ -29,5 +29,7 @@ router.post("/editProfile",requireAuth,upload.single("profile_image"),EditProfil
 router.get("/messages/images/:conversationId",requireAuth,imageList)
 router.post("/editGroup",requireAuth,upload.single("group_image"),EditGroup)
 router.post("/deleteConversation",requireAuth,deleteConversation);
+router.post("/deleteMessageMe",requireAuth,deleteMessageMe)
+router.post("/deleteMessage",requireAuth,deleteMessage);
 
 export default router;

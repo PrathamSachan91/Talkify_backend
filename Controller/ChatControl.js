@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import {
   Conversation,
   Message,
@@ -7,6 +7,7 @@ import {
 } from "../models/index.js";
 import { getIO } from "../socket.js";
 import cloudinary from "../lib/cloudinary.js";
+import Sequelize from "sequelize";
 
 /* ---------------- GET OR CREATE CONVERSATION ---------------- */
 export const getOrCreateConversation = async (req, res) => {
@@ -72,41 +73,33 @@ export const getMessages = async (req, res) => {
         return res.status(403).json({ message: "Access denied" });
       }
     }
-    let messages;
 
-    if (conversation.type === "group" || conversation.type === "broadcast") {
-      messages = await Message.findAll({
-        where: { conversation_id: conversationId },
-        order: [["createdAt", "ASC"]],
-        include: {
-          model: Authentication,
-          as: "sender",
-          attributes: ["auth_id", "user_name", "profile_image"],
-        },
-      });
-    } else {
-      messages = await Message.findAll({
-        where: {
-          conversation_id: conversationId,
-          [Op.or]: [
-            {
-              sender_id: me,
-              status_sender: 1,
-            },
-            {
-              sender_id: { [Op.ne]: me },
-              status_receiver: 1,
-            },
-          ],
-        },
-        order: [["createdAt", "ASC"]],
-        include: {
-          model: Authentication,
-          as: "sender",
-          attributes: ["auth_id", "user_name", "profile_image"],
-        },
-      });
-    }
+    const messages = await Message.findAll({
+      where: {
+        conversation_id: conversationId,
+
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn(
+              "JSON_CONTAINS",
+              Sequelize.fn(
+                "IFNULL",
+                Sequelize.col("deleted_for"),
+                Sequelize.literal("JSON_ARRAY()"),
+              ),
+              Sequelize.fn("JSON_ARRAY", me),
+            ),
+            0,
+          ),
+        ],
+      },
+      order: [["createdAt", "ASC"]],
+      include: {
+        model: Authentication,
+        as: "sender",
+        attributes: ["auth_id", "user_name", "profile_image"],
+      },
+    });
 
     res.json(messages);
   } catch (err) {
@@ -265,30 +258,126 @@ export const deleteConversation = async (req, res) => {
     const { conversationId } = req.body;
 
     await Message.update(
-      { status_sender: 0 },
+      {
+        deleted_for: Sequelize.fn(
+          "JSON_ARRAY_APPEND",
+          Sequelize.fn(
+            "IFNULL",
+            Sequelize.col("deleted_for"),
+            Sequelize.literal("JSON_ARRAY()"),
+          ),
+          "$",
+          me,
+        ),
+      },
       {
         where: {
           conversation_id: conversationId,
-          sender_id: me,
-        },
-      }
-    );
 
-    await Message.update(
-      { status_receiver: 0 },
-      {
-        where: {
-          conversation_id: conversationId,
-          sender_id: { [Op.ne]: me },
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn(
+                "JSON_CONTAINS",
+                Sequelize.fn(
+                  "IFNULL",
+                  Sequelize.col("deleted_for"),
+                  Sequelize.literal("JSON_ARRAY()"),
+                ),
+                Sequelize.fn("JSON_ARRAY", me),
+              ),
+              0,
+            ),
+          ],
         },
-      }
+      },
     );
     const io = getIO();
-    io.emit("delete_message");
+    io.to(`conversation-${conversationId}`).emit("delete_message", {
+      conversationId,
+      userId: me,
+    });
 
     res.json({ message: "Chat deleted for current user" });
   } catch (err) {
-    console.error("Delete conversation error:", err);
+    console.error("Delete chat error:", err);
     res.status(500).json({ message: "Failed to delete chat" });
+  }
+};
+
+export const deleteMessageMe = async (req, res) => {
+  try {
+    const me = req.user.auth_id;
+    const { messageId, conversationId } = req.body;
+
+    await Message.update(
+      {
+        deleted_for: Sequelize.fn(
+          "JSON_ARRAY_APPEND",
+          Sequelize.fn(
+            "IFNULL",
+            Sequelize.col("deleted_for"),
+            Sequelize.literal("JSON_ARRAY()"),
+          ),
+          "$",
+          me,
+        ),
+      },
+      {
+        where: {
+          id: messageId,
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn(
+                "JSON_CONTAINS",
+                Sequelize.fn(
+                  "IFNULL",
+                  Sequelize.col("deleted_for"),
+                  Sequelize.literal("JSON_ARRAY()"),
+                ),
+                Sequelize.fn("JSON_ARRAY", me),
+              ),
+              0,
+            ),
+          ],
+        },
+      },
+    );
+    const io = getIO();
+    io.to(`conversation-${conversationId}`).emit("delete_message", {
+      messageId,
+      userId: me,
+    });
+
+    res.json({ message: "Chat deleted for current user" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete chat" });
+  }
+};
+
+export const deleteMessage = async (req, res) => {
+  try {
+    const me = req.user.auth_id;
+    const { messageId, conversationId } = req.body;
+
+    const message = await Message.findByPk(messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (message.sender_id !== me) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+    await message.destroy();
+
+    const io = getIO();
+    io.to(`conversation-${conversationId}`).emit("delete_message", {
+      messageId,
+    });
+
+    res.json({ message: "Message deleted for everyone" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete message" });
   }
 };
