@@ -5,8 +5,19 @@ import AuthToken from "../models/token.js";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { getIO } from "../socket.js";
+import Otp from "../models/otp.js"
+import { getOtpEmailHtml } from "../utils/email.js";
+import nodemailer from "nodemailer"
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
 
 const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
@@ -241,4 +252,59 @@ export const Logout = async (req, res) => {
   });
 
   res.json({ message: "Logged out successfully" });
+};
+
+export const sendOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email required" });
+
+    const existingUser = await Authentication.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 2 * 60 * 1000);
+
+    await Otp.destroy({ where: { email } });
+    await Otp.create({ email, otp, expires_at: expiry });
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to: email,
+      subject: "OTP Verification",
+      html: getOtpEmailHtml(otp),
+    });
+
+    res.json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp)
+      return res.status(400).json({ message: "Email & OTP required" });
+
+    const record = await Otp.findOne({ where: { email } });
+    if (!record) return res.status(400).json({ message: "OTP not found" });
+
+    if (new Date() > record.expires_at) {
+      await Otp.destroy({ where: { email } });
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    if (record.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    await Otp.destroy({ where: { email } });
+    res.json({ message: "OTP verified successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
