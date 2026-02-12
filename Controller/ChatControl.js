@@ -170,6 +170,15 @@ export const sendMessage = async (req, res) => {
       type,
     });
 
+    await Conversation.update(
+      { last_message: cleanText },
+      {
+        where: {
+          conversation_id: conversationId,
+        },
+      },
+    );
+
     const fullMessage = await Message.findByPk(message.id, {
       include: {
         model: Authentication,

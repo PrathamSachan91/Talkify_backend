@@ -36,6 +36,10 @@ const Conversation = sequelize.define(
     group_image:{
       type:DataTypes.STRING,
       allowNull:true,
+    },
+    last_message: {
+      type: DataTypes.STRING,
+      allowNull: true,
     }
   },
   {

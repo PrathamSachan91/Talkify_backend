@@ -2,7 +2,7 @@ import express from "express";
 import { Signin, Login,getUser,Logout,googleLogin, verifyOTP, sendOTP } from "../Controller/Authentication.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { getAllUsers } from "../Controller/Chatlist.js";
-import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe } from "../Controller/ChatControl.js";
+import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe} from "../Controller/ChatControl.js";
 import { upload } from "../middleware/upload.js";
 import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
@@ -14,7 +14,7 @@ const router = express.Router();
 router.post("/auth/signup", Signin);
 router.post("/auth/login", Login);
 router.post("/auth/send-otp",sendOTP)
-router.post("/auth/verify-otp",verifyOTP)
+router.post("/auth/verify-otp",verifyOTP);
 router.get("/auth/me" ,requireAuth, getUser);
 router.get("/auth/logout",Logout,requireAuth);
 router.post("/auth/google",googleLogin)
