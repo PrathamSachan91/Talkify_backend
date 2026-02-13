@@ -170,8 +170,14 @@ export const sendMessage = async (req, res) => {
       type,
     });
 
+    const now = new Date();
+    
     await Conversation.update(
-      { last_message: cleanText },
+      { 
+        last_message: cleanText,
+        updatedAt: now,
+        last_sender:me,
+      },
       {
         where: {
           conversation_id: conversationId,
@@ -186,11 +192,19 @@ export const sendMessage = async (req, res) => {
         attributes: ["auth_id", "user_name", "profile_image"],
       },
     });
+    
     const io = getIO();
     io.to(`conversation-${conversationId}`).emit(
       "receive_message",
       fullMessage,
     );
+    
+    io.to(`conversation-${conversationId}`).emit("last_message", {
+      conversationId,
+      text: cleanText,
+      updatedAt: now,
+      last_sender:me,
+    });
 
     res.status(201).json(message);
   } catch (err) {

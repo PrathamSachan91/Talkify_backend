@@ -40,6 +40,10 @@ const Conversation = sequelize.define(
     last_message: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    last_sender:{
+      type:DataTypes.INTEGER,
+      allowNull:true
     }
   },
   {
