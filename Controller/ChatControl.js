@@ -247,40 +247,20 @@ export const deleteConversation = async (req, res) => {
     const me = req.user.auth_id;
     const { conversationId } = req.body;
 
-    await Message.update(
-      {
-        deleted_for: Sequelize.fn(
-          "JSON_ARRAY_APPEND",
-          Sequelize.fn(
-            "IFNULL",
-            Sequelize.col("deleted_for"),
-            Sequelize.literal("JSON_ARRAY()"),
-          ),
-          "$",
-          me,
-        ),
-      },
-      {
-        where: {
-          conversation_id: conversationId,
+    if(!conversationId){
+      return res.status(400).json({message:"Conversation ID required"});
+    }
 
-          [Op.and]: [
-            Sequelize.where(
-              Sequelize.fn(
-                "JSON_CONTAINS",
-                Sequelize.fn(
-                  "IFNULL",
-                  Sequelize.col("deleted_for"),
-                  Sequelize.literal("JSON_ARRAY()"),
-                ),
-                Sequelize.fn("JSON_ARRAY", me),
-              ),
-              0,
-            ),
-          ],
+    await sequelize.query(
+      `CALL sp_talkify_delete_conversation(:conversationId, :user)`,
+      {
+        replacements: {
+          conversationId,
+          user: me,
         },
       },
     );
+    
     const io = getIO();
     io.to(`conversation-${conversationId}`).emit("delete_message", {
       conversationId,
@@ -299,39 +279,16 @@ export const deleteMessageMe = async (req, res) => {
     const me = req.user.auth_id;
     const { messageId, conversationId } = req.body;
 
-    await Message.update(
+    await sequelize.query(
+      `CALL sp_talkify_delete_message_me(:messageId, :user)`,
       {
-        deleted_for: Sequelize.fn(
-          "JSON_ARRAY_APPEND",
-          Sequelize.fn(
-            "IFNULL",
-            Sequelize.col("deleted_for"),
-            Sequelize.literal("JSON_ARRAY()"),
-          ),
-          "$",
-          me,
-        ),
-      },
-      {
-        where: {
-          id: messageId,
-          [Op.and]: [
-            Sequelize.where(
-              Sequelize.fn(
-                "JSON_CONTAINS",
-                Sequelize.fn(
-                  "IFNULL",
-                  Sequelize.col("deleted_for"),
-                  Sequelize.literal("JSON_ARRAY()"),
-                ),
-                Sequelize.fn("JSON_ARRAY", me),
-              ),
-              0,
-            ),
-          ],
+        replacements: {
+          messageId,
+          user: me,
         },
       },
     );
+
     const io = getIO();
     io.to(`conversation-${conversationId}`).emit("delete_message", {
       messageId,
