@@ -1,4 +1,4 @@
-import { Op, where } from "sequelize";
+import { Op, TIME, where } from "sequelize";
 import {
   Conversation,
   Message,
@@ -8,6 +8,7 @@ import {
 import { getIO } from "../socket.js";
 import cloudinary from "../lib/cloudinary.js";
 import Sequelize from "sequelize";
+import sequelize from "../lib/db.js";
 
 /* ---------------- GET OR CREATE CONVERSATION ---------------- */
 export const getOrCreateConversation = async (req, res) => {
@@ -118,31 +119,6 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Conversation ID required" });
     }
 
-    const conversation = await Conversation.findByPk(conversationId);
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
-    }
-
-    if (conversation.type === "private") {
-      if (![conversation.user1_id, conversation.user2_id].includes(me)) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-    }
-
-    if (conversation.type === "group" || conversation.type === "broadcast") {
-      const isMember = await ConversationMember.findOne({
-        where: {
-          conversation_id: conversationId,
-          user_id: me,
-        },
-      });
-
-      if (!isMember) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-    }
-
     const cleanText = text?.trim() || null;
     const images = [];
     for (const file of req.files || []) {
@@ -162,53 +138,44 @@ export const sendMessage = async (req, res) => {
     if (images.length && cleanText) type = "mixed";
     else if (images.length) type = "image";
 
-    const message = await Message.create({
-      conversation_id: conversationId,
-      sender_id: me,
-      text: cleanText,
-      images,
-      type,
-    });
-
-    const now = new Date();
-    
-    await Conversation.update(
-      { 
-        last_message: cleanText,
-        updatedAt: now,
-        last_sender:me,
-      },
+    const [result] = await sequelize.query(
+      `CALL sp_talkify_send_message(
+    :conversationId,
+    :senderId,
+    :text,
+    :images,
+    :type
+  )`,
       {
-        where: {
-          conversation_id: conversationId,
+        replacements: {
+          conversationId,
+          senderId: me,
+          text: cleanText,
+          images: JSON.stringify(images),
+          type,
         },
       },
     );
 
-    const fullMessage = await Message.findByPk(message.id, {
-      include: {
-        model: Authentication,
-        as: "sender",
-        attributes: ["auth_id", "user_name", "profile_image"],
-      },
-    });
-    
+    const message = result[0];
+
     const io = getIO();
-    io.to(`conversation-${conversationId}`).emit(
-      "receive_message",
-      fullMessage,
-    );
-    
+    io.to(`conversation-${conversationId}`).emit("receive_message", message);
+
+    const now=new TIME();
     io.to(`conversation-${conversationId}`).emit("last_message", {
       conversationId,
       text: cleanText,
       updatedAt: now,
-      last_sender:me,
+      last_sender: me,
     });
 
     res.status(201).json(message);
   } catch (err) {
     console.error("Send message error:", err);
+    if (err.parent?.sqlState === "45000") {
+      return res.status(403).json({ message: err.parent.sqlMessage });
+    }
     res.status(500).json({ message: "Failed to send message" });
   }
 };
