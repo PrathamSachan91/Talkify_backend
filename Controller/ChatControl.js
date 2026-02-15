@@ -9,6 +9,7 @@ import { getIO } from "../socket.js";
 import cloudinary from "../lib/cloudinary.js";
 import Sequelize from "sequelize";
 import sequelize from "../lib/db.js";
+import { QueryTypes } from "sequelize";
 
 /* ---------------- GET OR CREATE CONVERSATION ---------------- */
 export const getOrCreateConversation = async (req, res) => {
@@ -44,70 +45,103 @@ export const getOrCreateConversation = async (req, res) => {
   }
 };
 
-/* ---------------- FETCH MESSAGES ---------------- */
+// export const getMessages = async (req, res) => {
+//   try {
+//     const { conversationId } = req.params;
+//     const me = req.user.auth_id;
+
+//     const conversation = await Conversation.findByPk(conversationId);
+
+//     if (!conversation) {
+//       return res.status(404).json({ message: "Conversation not found" });
+//     }
+
+//     if (conversation.type === "private") {
+//       if (![conversation.user1_id, conversation.user2_id].includes(me)) {
+//         return res.status(403).json({ message: "Access denied" });
+//       }
+//     }
+
+//     if (conversation.type === "group" || conversation.type === "broadcast") {
+//       const isMember = await ConversationMember.findOne({
+//         where: {
+//           conversation_id: conversationId,
+//           user_id: me,
+//         },
+//       });
+
+//       if (!isMember) {
+//         return res.status(403).json({ message: "Access denied" });
+//       }
+//     }
+
+//     const messages = await Message.findAll({
+//       where: {
+//         conversation_id: conversationId,
+
+//         [Op.and]: [
+//           Sequelize.where(
+//             Sequelize.fn(
+//               "JSON_CONTAINS",
+//               Sequelize.fn(
+//                 "IFNULL",
+//                 Sequelize.col("deleted_for"),
+//                 Sequelize.literal("JSON_ARRAY()"),
+//               ),
+//               Sequelize.fn("JSON_ARRAY", me),
+//             ),
+//             0,
+//           ),
+//         ],
+//       },
+//       order: [["createdAt", "ASC"]],
+//       include: {
+//         model: Authentication,
+//         as: "sender",
+//         attributes: ["auth_id", "user_name", "profile_image"],
+//       },
+//     });
+
+//     res.json(messages);
+//   } catch (err) {
+//     console.error("Fetch messages error:", err);
+//     res.status(500).json({ message: "Failed to fetch messages" });
+//   }
+// };
+
 export const getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const me = req.user.auth_id;
 
-    const conversation = await Conversation.findByPk(conversationId);
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
+    if (!conversationId) {
+      return res.status(400).json({ message: "Conversation ID required" });
     }
 
-    if (conversation.type === "private") {
-      if (![conversation.user1_id, conversation.user2_id].includes(me)) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-    }
-
-    if (conversation.type === "group" || conversation.type === "broadcast") {
-      const isMember = await ConversationMember.findOne({
-        where: {
-          conversation_id: conversationId,
-          user_id: me,
+    // Don't destructure yet - get the full result first
+    const results = await sequelize.query(
+      "CALL sp_talkify_get_messages(:conversationId, :userId)",
+      {
+        replacements: {
+          conversationId: Number(conversationId),
+          userId: me,
         },
-      });
-
-      if (!isMember) {
-        return res.status(403).json({ message: "Access denied" });
       }
-    }
+    );
+    
+    return res.json(results);
 
-    const messages = await Message.findAll({
-      where: {
-        conversation_id: conversationId,
-
-        [Op.and]: [
-          Sequelize.where(
-            Sequelize.fn(
-              "JSON_CONTAINS",
-              Sequelize.fn(
-                "IFNULL",
-                Sequelize.col("deleted_for"),
-                Sequelize.literal("JSON_ARRAY()"),
-              ),
-              Sequelize.fn("JSON_ARRAY", me),
-            ),
-            0,
-          ),
-        ],
-      },
-      order: [["createdAt", "ASC"]],
-      include: {
-        model: Authentication,
-        as: "sender",
-        attributes: ["auth_id", "user_name", "profile_image"],
-      },
-    });
-
-    res.json(messages);
   } catch (err) {
     console.error("Fetch messages error:", err);
-    res.status(500).json({ message: "Failed to fetch messages" });
+
+    if (err.parent?.sqlState === "45000") {
+      return res.status(403).json({ message: err.parent.sqlMessage });
+    }
+
+    return res.status(500).json({ message: "Failed to fetch messages" });
   }
 };
+
 
 /* ---------------- SEND MESSAGE ---------------- */
 export const sendMessage = async (req, res) => {
