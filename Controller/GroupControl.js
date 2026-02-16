@@ -1,4 +1,4 @@
-import { Conversation, ConversationMember, Authentication } from "../models/index.js";
+import sequelize from "../lib/db.js";
 
 export const createGroup = async (req, res) => {
   try {
@@ -9,34 +9,22 @@ export const createGroup = async (req, res) => {
       return res.status(400).json({ message: "Invalid data" });
     }
 
-    const conversation = await Conversation.create({
-      type: "group",
-      created_by: me,
-      group_name,
-    });
+    const uniqueMembers = [...new Set(members)];
 
-    await ConversationMember.create({
-      conversation_id: conversation.conversation_id,
-      user_id: me,
-      role: "admin",
-    });
+    const result = await sequelize.query(
+      `CALL sp_talkify_create_group(:creatorId, :groupName, :members)`,
+      {
+        replacements: {
+          creatorId: me,
+          groupName: group_name,
+          members: JSON.stringify(uniqueMembers),
+        },
+      }
+    );
 
-    const uniqueMembers = [...new Set(members)].filter((id) => id !== me);
+    const group = Array.isArray(result) ? result[0] : result;
 
-    const bulk = uniqueMembers.map((id) => ({
-      conversation_id: conversation.conversation_id,
-      user_id: id,
-      role: "member",
-    }));
-
-    if (bulk.length) {
-      await ConversationMember.bulkCreate(bulk);
-    }
-
-    res.status(201).json({
-      conversation_id: conversation.conversation_id,
-      group_name: conversation.group_name,
-    });
+    res.status(201).json(group);
   } catch (err) {
     console.error("Create group error:", err);
     res.status(500).json({ message: "Failed to create group" });

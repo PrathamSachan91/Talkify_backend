@@ -5,9 +5,10 @@ import AuthToken from "../models/token.js";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { getIO } from "../socket.js";
-import Otp from "../models/otp.js"
+import Otp from "../models/otp.js";
 import { getOtpEmailHtml } from "../utils/email.js";
-import nodemailer from "nodemailer"
+import nodemailer from "nodemailer";
+import sequelize from "../lib/db.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -51,11 +52,16 @@ export const Signin = async (req, res) => {
       expiresIn: "7d",
     });
 
-    await AuthToken.create({
-      auth_id: user.auth_id,
-      token: hashToken(token),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    await sequelize.query(
+      `CALL sp_talkify_rotate_auth_token(:authId, :token, :expiresAt)`,
+      {
+        replacements: {
+          authId: user.auth_id,
+          token: hashToken(token),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    );
 
     res.cookie("access_token", token, {
       httpOnly: true,
@@ -68,7 +74,7 @@ export const Signin = async (req, res) => {
     //   httpOnly: true,
     //   secure: true, // 🔥 REQUIRED on Render
     //   sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-    //   path: "/", 
+    //   path: "/",
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
 
@@ -117,15 +123,16 @@ export const Login = async (req, res) => {
       expiresIn: "7d",
     });
 
-    await AuthToken.destroy({
-      where: { auth_id: user.auth_id },
-    });
-
-    await AuthToken.create({
-      auth_id: user.auth_id,
-      token: hashToken(token),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    await sequelize.query(
+      `CALL sp_talkify_rotate_auth_token(:authId, :token, :expiresAt)`,
+      {
+        replacements: {
+          authId: user.auth_id,
+          token: hashToken(token),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    );
 
     await user.update({ last_active: new Date() });
 
@@ -140,7 +147,7 @@ export const Login = async (req, res) => {
     //   httpOnly: true,
     //   secure: true, // 🔥 REQUIRED on Render
     //   sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-    //   path: "/", 
+    //   path: "/",
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
 
@@ -193,15 +200,16 @@ export const googleLogin = async (req, res) => {
       expiresIn: "7d",
     });
 
-    await AuthToken.destroy({
-      where: { auth_id: user.auth_id },
-    });
-
-    await AuthToken.create({
-      auth_id: user.auth_id,
-      token: hashToken(token),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    await sequelize.query(
+      `CALL sp_talkify_rotate_auth_token(:authId, :token, :expiresAt)`,
+      {
+        replacements: {
+          authId: user.auth_id,
+          token: hashToken(token),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    );
 
     res.cookie("access_token", token, {
       httpOnly: true,
@@ -214,7 +222,7 @@ export const googleLogin = async (req, res) => {
     //   httpOnly: true,
     //   secure: true, // 🔥 REQUIRED on Render
     //   sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-    //   path: "/", 
+    //   path: "/",
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
 
@@ -242,7 +250,7 @@ export const Logout = async (req, res) => {
   //   httpOnly: true,
   //   secure: true,
   //   sameSite: "none",
-  //   path: "/", 
+  //   path: "/",
   // });
 
   res.clearCookie("access_token", {
@@ -267,8 +275,16 @@ export const sendOTP = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + 2 * 60 * 1000);
 
-    await Otp.destroy({ where: { email } });
-    await Otp.create({ email, otp, expires_at: expiry });
+    await sequelize.query(
+      `CALL sp_talkify_create_otp(:email,:otp,:expiresAt)`,
+      {
+        replacements:{
+          email,
+          otp,
+          expiresAt:expiry,
+        },
+      },
+    )
 
     await transporter.sendMail({
       from: process.env.MAIL_USER,

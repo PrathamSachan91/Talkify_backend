@@ -61,7 +61,6 @@ export const EditGroup = async (req, res) => {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    // only creator can edit
     if (group.created_by !== me) {
       return res.status(403).json({ message: "Not authorized" });
     }

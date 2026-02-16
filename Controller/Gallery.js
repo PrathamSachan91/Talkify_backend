@@ -19,7 +19,6 @@ export const imageList = async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
-    // ✅ FILTER IMAGES IN JS (NOT SQL)
     const result = [];
 
     for (const msg of messages) {

@@ -150,7 +150,6 @@ export const getConversationMeta = async (req, res) => {
         },
       }
     );
-    console.log(result);
     res.json(Array.isArray(result) ? result[0] : result);
   } catch (err) {
     console.error("Conversation meta error:", err);
