@@ -259,7 +259,7 @@ export const sendOTP = async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email required" });
 
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await Authentication.findOne({ where: { email } });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
