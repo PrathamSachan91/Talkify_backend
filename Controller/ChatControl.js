@@ -7,7 +7,6 @@ import {
 } from "../models/index.js";
 import { getIO } from "../socket.js";
 import cloudinary from "../lib/cloudinary.js";
-import Sequelize from "sequelize";
 import sequelize from "../lib/db.js";
 
 export const getOrCreateConversation = async (req, res) => {
@@ -137,54 +136,33 @@ export const sendMessage = async (req, res) => {
   }
 };
 
-/* ---------------- GET CONVERSATION META ---------------- */
 export const getConversationMeta = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const me = req.user.auth_id;
-
-    const conversation = await Conversation.findByPk(conversationId);
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
-    }
-
-    if (conversation.type === "private") {
-      if (![conversation.user1_id, conversation.user2_id].includes(me)) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const receiverId =
-        conversation.user1_id === me
-          ? conversation.user2_id
-          : conversation.user1_id;
-
-      return res.json({
-        type: "private",
-        receiver_id: receiverId,
-      });
-    }
-    if (conversation.type === "group" || conversation.type === "broadcast") {
-      await ConversationMember.findOrCreate({
-        where: {
-          conversation_id: conversationId,
-          user_id: me,
+    const conversationNum=Number(conversationId);
+    const result = await sequelize.query(
+      `CALL sp_talkify_get_conversation_meta(:conversationId, :userId)`,
+      {
+        replacements: {
+          conversationId:conversationNum,
+          userId: me,
         },
-        defaults: { role: "member" },
-      });
-
-      return res.json({
-        type: conversation.type,
-        group_name: conversation.group_name,
-        created_by: conversation.created_by,
-        group_image: conversation.group_image,
-      });
-    }
+      }
+    );
+    console.log(result);
+    res.json(Array.isArray(result) ? result[0] : result);
   } catch (err) {
     console.error("Conversation meta error:", err);
+
+    if (err.parent?.sqlState === "45000") {
+      return res.status(403).json({ message: err.parent.sqlMessage });
+    }
+
     res.status(500).json({ message: "Failed to fetch meta" });
   }
 };
+
 
 export const getUserById = async (req, res) => {
   const user = await Authentication.findByPk(req.params.userId, {
