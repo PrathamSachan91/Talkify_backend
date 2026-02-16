@@ -63,20 +63,20 @@ export const Signin = async (req, res) => {
       },
     );
 
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     // res.cookie("access_token", token, {
     //   httpOnly: true,
-    //   secure: true, // 🔥 REQUIRED on Render
-    //   sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-    //   path: "/",
+    //   secure: false,
+    //   sameSite: "lax",
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
+
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED on Render
+      sameSite: "none", // 🔥 REQUIRED for cross-site cookies
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     const io = getIO();
     io.emit("user_created", {
@@ -136,20 +136,20 @@ export const Login = async (req, res) => {
 
     await user.update({ last_active: new Date() });
 
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     // res.cookie("access_token", token, {
     //   httpOnly: true,
-    //   secure: true, // 🔥 REQUIRED on Render
-    //   sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-    //   path: "/",
+    //   secure: false,
+    //   sameSite: "lax",
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
+
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED on Render
+      sameSite: "none", // 🔥 REQUIRED for cross-site cookies
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     return res.json({
       message: "Login successful",
@@ -211,20 +211,20 @@ export const googleLogin = async (req, res) => {
       },
     );
 
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     // res.cookie("access_token", token, {
     //   httpOnly: true,
-    //   secure: true, // 🔥 REQUIRED on Render
-    //   sameSite: "none", // 🔥 REQUIRED for cross-site cookies
-    //   path: "/",
+    //   secure: false,
+    //   sameSite: "lax",
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
+
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: true, // 🔥 REQUIRED on Render
+      sameSite: "none", // 🔥 REQUIRED for cross-site cookies
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({ message: "Google login successful" });
   } catch (err) {
@@ -246,18 +246,18 @@ export const Logout = async (req, res) => {
     await AuthToken.destroy({ where: { token: tokenHash } });
   }
 
-  // res.clearCookie("access_token", {
-  //   httpOnly: true,
-  //   secure: true,
-  //   sameSite: "none",
-  //   path: "/",
-  // });
-
   res.clearCookie("access_token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
+    path: "/",
   });
+
+  // res.clearCookie("access_token", {
+  //   httpOnly: true,
+  //   secure: false,
+  //   sameSite: "lax",
+  // });
 
   res.json({ message: "Logged out successfully" });
 };
