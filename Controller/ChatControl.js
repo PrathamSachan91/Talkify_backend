@@ -117,9 +117,9 @@ export const sendMessage = async (req, res) => {
     const now = new Date().toISOString();
 
     const io = getIO();
-    
+
     io.to(`conversation-${conversationId}`).emit("receive_message", message);
-    
+
     io.to(`conversation-${conversationId}`).emit("last_message", {
       conversationId,
       text: cleanText,
@@ -275,7 +275,7 @@ export const fetchConversationsWithUnread = async (req, res) => {
       `CALL sp_talkify_fetch_unread(:userId)`,
       {
         replacements: { userId: me },
-      }
+      },
     );
 
     res.json(Array.isArray(result) ? result : []);
@@ -302,7 +302,7 @@ export const markConversationRead = async (req, res) => {
           uid: userId,
           mid: lastMessageId,
         },
-      }
+      },
     );
 
     // Emit to all users in conversation that this user marked it as read
@@ -316,5 +316,24 @@ export const markConversationRead = async (req, res) => {
   } catch (err) {
     console.error("Mark read error:", err);
     res.status(500).json({ message: "Failed to mark as read" });
+  }
+};
+
+export const editMessage = async (req, res) => {
+  try {
+    const { messageId, text } = req.body;
+    const [rowsUpdated] = await Message.update(
+      { text },            
+      { where: { id: messageId } }
+    );
+    if (rowsUpdated === 0) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+    const updated = await Message.findByPk(messageId);
+    return res.status(200).json(updated);
+
+  } catch (err) {
+    console.error("editMessage error:", err);
+    res.status(500).json({ message: "Failed to update message" });
   }
 };

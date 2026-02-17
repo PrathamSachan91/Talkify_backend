@@ -2,7 +2,7 @@ import express from "express";
 import { Signin, Login,getUser,Logout,googleLogin, verifyOTP, sendOTP } from "../Controller/Authentication.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { getAllUsers } from "../Controller/Chatlist.js";
-import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe, markConversationRead, fetchConversationsWithUnread} from "../Controller/ChatControl.js";
+import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe, markConversationRead, fetchConversationsWithUnread, editMessage} from "../Controller/ChatControl.js";
 import { upload } from "../middleware/upload.js";
 import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
@@ -35,6 +35,7 @@ router.post("/deleteConversation",requireAuth,deleteConversation);
 router.post("/deleteMessageMe",requireAuth,deleteMessageMe)
 router.post("/deleteMessage",requireAuth,deleteMessage);
 router.post("/conversations/mark-read",requireAuth,markConversationRead);
-router.get("/conversations/unread",requireAuth,fetchConversationsWithUnread)
+router.get("/conversations/unread",requireAuth,fetchConversationsWithUnread);
+router.post("/edit/message",requireAuth,editMessage);
 
 export default router;
