@@ -18,15 +18,15 @@ export const getOrCreateConversation = async (req, res) => {
       return res.status(400).json({ message: "Invalid user" });
     }
 
-    const result =await sequelize.query(
+    const result = await sequelize.query(
       `CALL sp_talkify_get_or_create_conversation(:user1,:user2)`,
       {
         replacements: {
-          user1:userId,
-          user2:me,
+          user1: userId,
+          user2: me,
         },
       },
-    )
+    );
     const conversation = Array.isArray(result) ? result[0] : result;
     res.json(conversation);
   } catch (err) {
@@ -51,7 +51,7 @@ export const getMessages = async (req, res) => {
           conversationId: Number(conversationId),
           userId: me,
         },
-      }
+      },
     );
     return res.json(results);
   } catch (err) {
@@ -114,16 +114,24 @@ export const sendMessage = async (req, res) => {
     );
 
     const message = result[0];
+    const now = new Date().toISOString();
 
     const io = getIO();
+    
+    // 1. Emit the new message to all users in the conversation
     io.to(`conversation-${conversationId}`).emit("receive_message", message);
-
-    const now = new Date().toISOString();
+    
+    // 2. Update last message for all users (this triggers sorting)
     io.to(`conversation-${conversationId}`).emit("last_message", {
       conversationId,
       text: cleanText,
       updatedAt: now,
       last_sender: me,
+    });
+    
+    io.to(`conversation-${conversationId}`).emit("unread_increment", {
+      conversationId,
+      senderId: me,
     });
 
     res.status(201).json(message);
@@ -140,15 +148,15 @@ export const getConversationMeta = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const me = req.user.auth_id;
-    const conversationNum=Number(conversationId);
+    const conversationNum = Number(conversationId);
     const result = await sequelize.query(
       `CALL sp_talkify_get_conversation_meta(:conversationId, :userId)`,
       {
         replacements: {
-          conversationId:conversationNum,
+          conversationId: conversationNum,
           userId: me,
         },
-      }
+      },
     );
     res.json(Array.isArray(result) ? result[0] : result);
   } catch (err) {
@@ -161,7 +169,6 @@ export const getConversationMeta = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch meta" });
   }
 };
-
 
 export const getUserById = async (req, res) => {
   const user = await Authentication.findByPk(req.params.userId, {
@@ -180,8 +187,8 @@ export const deleteConversation = async (req, res) => {
     const me = req.user.auth_id;
     const { conversationId } = req.body;
 
-    if(!conversationId){
-      return res.status(400).json({message:"Conversation ID required"});
+    if (!conversationId) {
+      return res.status(400).json({ message: "Conversation ID required" });
     }
 
     await sequelize.query(
@@ -193,7 +200,7 @@ export const deleteConversation = async (req, res) => {
         },
       },
     );
-    
+
     const io = getIO();
     io.to(`conversation-${conversationId}`).emit("delete_message", {
       conversationId,
@@ -259,5 +266,57 @@ export const deleteMessage = async (req, res) => {
     res.json({ message: "Message deleted for everyone" });
   } catch (err) {
     res.status(500).json({ message: "Failed to delete message" });
+  }
+};
+
+export const fetchConversationsWithUnread = async (req, res) => {
+  try {
+    const me = req.user.auth_id;
+
+    const result = await sequelize.query(
+      `CALL sp_talkify_fetch_unread(:userId)`,
+      {
+        replacements: { userId: me },
+      }
+    );
+
+    res.json(Array.isArray(result) ? result : []);
+  } catch (err) {
+    console.error("Fetch conversations error:", err);
+    res.status(500).json({ message: "Failed to fetch conversations" });
+  }
+};
+
+export const markConversationRead = async (req, res) => {
+  try {
+    const { conversationId, lastMessageId } = req.body;
+    const userId = req.user.auth_id;
+
+    if (!conversationId || !lastMessageId) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await sequelize.query(
+      `CALL sp_talkify_mark_conversation_read(:cid, :uid, :mid)`,
+      {
+        replacements: {
+          cid: conversationId,
+          uid: userId,
+          mid: lastMessageId,
+        },
+      }
+    );
+
+    // Emit to all users in conversation that this user marked it as read
+    const io = getIO();
+    io.to(`conversation-${conversationId}`).emit("conversation_read", {
+      conversationId,
+      userId,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Mark read error:", err);
+    res.status(500).json({ message: "Failed to mark as read" });
   }
 };

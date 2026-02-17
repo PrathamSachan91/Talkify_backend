@@ -2,6 +2,7 @@ import Authentication from "./Authentication.js";
 import Conversation from "./Conversation.js";
 import Message from "./Message.js";
 import ConversationMember from "./GroupMember.js";
+import ConversationRead from "./conversationReads.js";
 
 /* ============================= */
 /* Conversation ↔ Users (PRIVATE) */
@@ -65,6 +66,22 @@ Authentication.hasMany(Message, {
   foreignKey: "sender_id",
 });
 
+Conversation.hasMany(ConversationRead, {
+  foreignKey: "conversation_id",
+});
+
+ConversationRead.belongsTo(Conversation, {
+  foreignKey: "conversation_id",
+});
+
+Authentication.hasMany(ConversationRead, {
+  foreignKey: "user_id",
+});
+
+ConversationRead.belongsTo(Authentication, {
+  foreignKey: "user_id",
+});
+
 /* ============================= */
 /* EXPORTS */
 /* ============================= */
@@ -74,4 +91,5 @@ export {
   Conversation,
   Message,
   ConversationMember,
+  ConversationRead,
 };

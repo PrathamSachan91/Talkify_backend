@@ -1,8 +1,8 @@
 import express from "express";
 import { Signin, Login,getUser,Logout,googleLogin, verifyOTP, sendOTP } from "../Controller/Authentication.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
-import { fetchLast, getAllUsers } from "../Controller/Chatlist.js";
-import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe} from "../Controller/ChatControl.js";
+import { getAllUsers } from "../Controller/Chatlist.js";
+import { getMessages, getOrCreateConversation, sendMessage,getConversationMeta,getUserById, deleteConversation, deleteMessage, deleteMessageMe, markConversationRead, fetchConversationsWithUnread} from "../Controller/ChatControl.js";
 import { upload } from "../middleware/upload.js";
 import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
@@ -15,7 +15,7 @@ router.post("/auth/signup", Signin);
 router.post("/auth/login", Login);
 router.post("/auth/send-otp",sendOTP)
 router.post("/auth/verify-otp",verifyOTP);
-router.get("/lastMessage",requireAuth,fetchLast);
+// router.get("/lastMessage",requireAuth,fetchLast);
 router.get("/auth/me" ,requireAuth, getUser);
 router.get("/auth/logout",Logout,requireAuth);
 router.post("/auth/google",googleLogin)
@@ -34,5 +34,7 @@ router.post("/editGroup",requireAuth,upload.single("group_image"),EditGroup)
 router.post("/deleteConversation",requireAuth,deleteConversation);
 router.post("/deleteMessageMe",requireAuth,deleteMessageMe)
 router.post("/deleteMessage",requireAuth,deleteMessage);
+router.post("/conversations/mark-read",requireAuth,markConversationRead);
+router.get("/conversations/unread",requireAuth,fetchConversationsWithUnread)
 
 export default router;
