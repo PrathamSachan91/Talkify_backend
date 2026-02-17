@@ -118,17 +118,15 @@ export const sendMessage = async (req, res) => {
 
     const io = getIO();
     
-    // 1. Emit the new message to all users in the conversation
     io.to(`conversation-${conversationId}`).emit("receive_message", message);
     
-    // 2. Update last message for all users (this triggers sorting)
     io.to(`conversation-${conversationId}`).emit("last_message", {
       conversationId,
       text: cleanText,
       updatedAt: now,
       last_sender: me,
     });
-    
+
     io.to(`conversation-${conversationId}`).emit("unread_increment", {
       conversationId,
       senderId: me,

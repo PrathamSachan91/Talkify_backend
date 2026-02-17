@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import Authentication from "./models/Authentication.js";
 
 let io;
-const onlineUsers = new Map(); // userId -> socketId
+const onlineUsers = new Map();
 
 export const initSocket = (server) => {
   io = new Server(server, {
