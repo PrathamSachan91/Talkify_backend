@@ -29,7 +29,7 @@ export const requireAuth = async (req, res, next) => {
     }
 
     const user = await Authentication.findByPk(decoded.auth_id, {
-      attributes: ["auth_id", "user_name", "email", "profile_image"],
+      attributes: ["auth_id", "user_name", "email", "profile_image","user_type"],
     });
 
     await Authentication.update(

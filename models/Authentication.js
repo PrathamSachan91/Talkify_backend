@@ -38,6 +38,10 @@ const Authentication = sequelize.define(
     profile_image:{
       type:DataTypes.STRING,
       allowNull:true,
+    },
+    user_type:{
+      type:DataTypes.ENUM("user", "admin"),
+      defaultValue:"admin",
     }
   },
   {
