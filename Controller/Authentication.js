@@ -114,6 +114,12 @@ export const Login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (user.user_status === "Banned") {
+      return res.status(403).json({
+        message: "Banned user contact Admin",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -186,11 +192,15 @@ export const googleLogin = async (req, res) => {
 
     const { email } = payload;
 
-    // 🔒 Allow only registered users
     const user = await Authentication.findOne({ where: { email } });
     if (!user) {
       return res.status(403).json({
         message: "Account not found. Please sign up first.",
+      });
+    }
+    if (user.user_status === "Banned") {
+      return res.status(403).json({
+        message: "Banned user contact Admin",
       });
     }
 
@@ -278,13 +288,13 @@ export const sendOTP = async (req, res) => {
     await sequelize.query(
       `CALL sp_talkify_create_otp(:email,:otp,:expiresAt)`,
       {
-        replacements:{
+        replacements: {
           email,
           otp,
-          expiresAt:expiry,
+          expiresAt: expiry,
         },
       },
-    )
+    );
 
     await transporter.sendMail({
       from: process.env.MAIL_USER,

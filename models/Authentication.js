@@ -42,6 +42,10 @@ const Authentication = sequelize.define(
     user_type:{
       type:DataTypes.ENUM("user", "admin"),
       defaultValue:"admin",
+    },
+    user_status:{
+      type:DataTypes.ENUM("Active", "Banned"),
+      defaultValue:"admin",
     }
   },
   {

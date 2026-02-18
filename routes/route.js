@@ -8,7 +8,7 @@ import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
 import { EditGroup, EditProfile } from "../Controller/editProfile.js";
 import { imageList } from "../Controller/Gallery.js";
-import { fetchAllGroup } from "../Controller/Admin.js";
+import { fetchAllGroup, handleStatus } from "../Controller/Admin.js";
 
 const router = express.Router();
 
@@ -16,7 +16,6 @@ router.post("/auth/signup", Signin);
 router.post("/auth/login", Login);
 router.post("/auth/send-otp",sendOTP)
 router.post("/auth/verify-otp",verifyOTP);
-// router.get("/lastMessage",requireAuth,fetchLast);
 router.get("/auth/me" ,requireAuth, getUser);
 router.get("/auth/logout",Logout,requireAuth);
 router.post("/auth/google",googleLogin)
@@ -39,5 +38,6 @@ router.post("/conversations/mark-read",requireAuth,markConversationRead);
 router.get("/conversations/unread",requireAuth,fetchConversationsWithUnread);
 router.post("/edit/message",requireAuth,editMessage);
 router.get("/allGroup",fetchAllGroup);
+router.post("/changeStatus",handleStatus)
 
 export default router;
