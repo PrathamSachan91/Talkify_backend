@@ -8,7 +8,7 @@ import { createGroup, } from "../Controller/GroupControl.js";
 import { getMyGroups,getBroadcast } from "../Controller/getGroups.js";
 import { EditGroup, EditProfile } from "../Controller/editProfile.js";
 import { imageList } from "../Controller/Gallery.js";
-import { fetchAllGroup, handleStatus } from "../Controller/Admin.js";
+import { dropConversation, fetchAllConversation, fetchAllGroup, handleStatus } from "../Controller/Admin.js";
 
 const router = express.Router();
 
@@ -39,5 +39,7 @@ router.get("/conversations/unread",requireAuth,fetchConversationsWithUnread);
 router.post("/edit/message",requireAuth,editMessage);
 router.get("/allGroup",fetchAllGroup);
 router.post("/changeStatus",handleStatus)
+router.get("/fetchConversation",fetchAllConversation);
+router.post("/dropConversation",dropConversation);
 
 export default router;

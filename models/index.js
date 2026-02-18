@@ -18,6 +18,11 @@ Conversation.belongsTo(Authentication, {
   foreignKey: "user2_id",
 });
 
+Conversation.belongsTo(Authentication, {
+  as: "createdBy",
+  foreignKey: "created_by",
+});
+
 /* ============================= */
 /* Conversation ↔ Members (GROUP) */
 /* ============================= */

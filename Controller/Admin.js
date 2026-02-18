@@ -34,3 +34,36 @@ export const handleStatus = async (req, res) => {
     return res.status(500).json({ message: "Status toggle failed" });
   }
 };
+
+export const fetchAllConversation = async(req,res) => {
+  const conversation=await Conversation.findAll({
+    attributes: ["conversation_id","updatedAt","last_message","type","message_count","group_name","user1_id","user2_id","created_by"],
+    include: [
+      {
+        model: Authentication,
+        as: "user1",
+        attributes: ["auth_id", "user_name","profile_image"],
+      },
+      {
+        model: Authentication,
+        as: "user2",    
+        attributes: ["auth_id", "user_name","profile_image"],
+      },
+      {
+        model: Authentication,
+        as: "createdBy",    
+        attributes: ["auth_id", "user_name"],
+      },
+    ],
+  })
+  return res.json(conversation);
+}
+
+export const dropConversation = async(req,res) => {
+  const {conversationId} =req.body;
+  await Conversation.destroy({
+    where: {
+      conversation_id:conversationId,
+    }
+  })
+}
