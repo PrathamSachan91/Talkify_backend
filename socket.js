@@ -9,8 +9,8 @@ const onlineUsers = new Map();
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      // origin: "https://talkify-frontend-qql7.onrender.com",
-      origin: "http://localhost:3000",
+      origin: "https://talkify-frontend-qql7.onrender.com",
+      // origin: "http://localhost:3000",
       credentials: true,
     },
   });

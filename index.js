@@ -13,8 +13,8 @@ const server = http.createServer(app);
 
 app.use(
   cors({
-    // origin: "https://talkify-frontend-qql7.onrender.com",
-    origin: "http://localhost:3000",
+    origin: "https://talkify-frontend-qql7.onrender.com",
+    // origin: "http://localhost:3000",
     credentials: true,
   })
 );
