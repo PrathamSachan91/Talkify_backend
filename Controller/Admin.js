@@ -55,6 +55,7 @@ export const fetchAllConversation = async(req,res) => {
         attributes: ["auth_id", "user_name"],
       },
     ],
+    order: [["conversation_id", "ASC"]],
   })
   return res.json(conversation);
 }
