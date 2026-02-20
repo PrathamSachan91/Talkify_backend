@@ -10,31 +10,6 @@ export const fetchAllGroup= async(req,res) =>{
   return res.json(groups);
 }
 
-export const handleStatus = async (req, res) => {
-  try {
-    const { auth_id } = req.body;
-
-    const user = await Authentication.findOne({ where: { auth_id } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const newStatus =
-      user.user_status === "Active" ? "Banned" : "Active";
-
-    await Authentication.update(
-      { user_status: newStatus },
-      { where: { auth_id } }
-    );
-
-    return res.json({
-      success: true,
-      auth_id,
-      status: newStatus,
-    });
-  } catch (err) {
-    return res.status(500).json({ message: "Status toggle failed" });
-  }
-};
-
 export const fetchAllConversation = async(req,res) => {
   const conversation=await Conversation.findAll({
     attributes: ["conversation_id","updatedAt","last_message","type","message_count","group_name","user1_id","user2_id","created_by"],
@@ -68,3 +43,28 @@ export const dropConversation = async(req,res) => {
     }
   })
 }
+
+export const handleStatus = async (req, res) => {
+  try {
+    const { auth_id } = req.body;
+
+    const user = await Authentication.findOne({ where: { auth_id } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const newStatus =
+      user.user_status === "Active" ? "Banned" : "Active";
+
+    await Authentication.update(
+      { user_status: newStatus },
+      { where: { auth_id } }
+    );
+
+    return res.json({
+      success: true,
+      auth_id,
+      status: newStatus,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Status toggle failed" });
+  }
+};
