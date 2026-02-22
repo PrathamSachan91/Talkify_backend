@@ -5,7 +5,7 @@ export const fetchAllGroup= async(req,res) =>{
     where:{
       type:"group"
     },
-    attributes: ["conversation_id", "group_name","group_image"]
+    attributes: ["conversation_id","group_name","group_image"]
   })
   return res.json(groups);
 }
